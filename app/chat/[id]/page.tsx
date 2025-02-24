@@ -17,12 +17,16 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
+interface TableRowData {
+  [key: string]: string | number | null;
+}
+
 export default function ChatPage() {
   const { id } = useParams();
   const searchParams = useSearchParams();
   const datasetId = searchParams.get('dataset');
   const datasetName = searchParams.get('name');
-  
+
   const { messages, chatSessions, addChatMessage, setCurrentChat } = useStore();
   const [query, setQuery] = useState('');
 
@@ -57,10 +61,10 @@ export default function ChatPage() {
         content: 'Here are the results based on your query:',
         timestamp: new Date().toISOString(),
         tableData: [
-          { month: 'January', sales: '$40,000' },
-          { month: 'February', sales: '$35,000' },
-          { month: 'March', sales: '$45,000' },
-        ],
+          { month: 'January', sales: 40000 },
+          { month: 'February', sales: 35000 },
+          { month: 'March', sales: 45000 },
+        ] as TableRowData[],
         chartData: {
           type: 'bar',
           data: [40000, 35000, 45000],
@@ -85,19 +89,19 @@ export default function ChatPage() {
           {currentMessages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'
+                }`}
             >
               <div
-                className={`max-w-[80%] p-4 rounded-lg ${
-                  message.type === 'user'
+                className={`max-w-[80%] p-4 rounded-lg ${message.type === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
-                }`}
+                  }`}
               >
                 <p className="mb-2">{message.content}</p>
-                {message.tableData && (
+
+                {/* Render Table if exists */}
+                {message.tableData && message.tableData.length > 0 && (
                   <div className="bg-background rounded-lg p-2 mt-2">
                     <Table>
                       <TableHeader>
@@ -111,7 +115,13 @@ export default function ChatPage() {
                         {message.tableData.map((row, i) => (
                           <TableRow key={i}>
                             {Object.values(row).map((value, j) => (
-                              <TableCell key={j}>{value}</TableCell>
+                              <TableCell key={j}>
+                                {typeof value === 'string' || typeof value === 'number'
+                                  ? value
+                                  : value !== null && value !== undefined
+                                    ? JSON.stringify(value)
+                                    : '—'}
+                              </TableCell>
                             ))}
                           </TableRow>
                         ))}
@@ -119,7 +129,9 @@ export default function ChatPage() {
                     </Table>
                   </div>
                 )}
-                {message.chartData && (
+
+                {/* Render Chart if exists */}
+                {message.chartData && message.chartData.labels.length > 0 && (
                   <div className="bg-background rounded-lg p-2 mt-2">
                     <BarChart
                       width={500}
@@ -144,6 +156,7 @@ export default function ChatPage() {
         </div>
       </ScrollArea>
 
+      {/* Input Form */}
       <form onSubmit={handleSubmit} className="flex gap-2">
         <Input
           value={query}
